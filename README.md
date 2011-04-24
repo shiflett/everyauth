@@ -10,3 +10,9 @@ Usage
 -----
 
 This library is a work in progress. Don't use it yet.
+
+Support
+-------
+
+- Flickr
+- Twitter
