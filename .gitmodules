@@ -1,3 +1,6 @@
-[submodule "twitteroauth"]
-	path = twitteroauth
+[submodule "flickr"]
+	path = flickr
+	url = git://github.com/kellan/flickr.simple.php.git
+[submodule "twitter"]
+	path = twitter
 	url = git://github.com/abraham/twitteroauth.git
