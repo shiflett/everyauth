@@ -1,5 +1,5 @@
-Everyauth: PHP abstraction library for universal auth support
-=============================================================
+Everyauth, a PHP abstraction library for universal auth support
+===============================================================
 
 Requirements
 ------------
@@ -9,4 +9,4 @@ Requirements
 Usage
 -----
 
-This library is a work in progress. Don't use it.
+This library is a work in progress. Don't use it yet.
