@@ -4,3 +4,6 @@
 [submodule "twitter"]
 	path = twitter
 	url = git://github.com/abraham/twitteroauth.git
+[submodule "foursquare"]
+	path = foursquare
+	url = git://github.com/jmathai/foursquare-async.git
