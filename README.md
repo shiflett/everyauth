@@ -52,6 +52,7 @@ everything I need in `$_SESSION['everyauth']` and returns the user to the
 Support
 -------
 
-For now, Everyauth only supports the following apps:
+For now, Everyauth supports the following apps:
 
 - [Flickr](http://flickr.com/)
+- [Twitter](http://twitter.com/)
