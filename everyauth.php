@@ -1,10 +1,11 @@
 <?php
 
 use \Flickr;
+use \TwitterOAuth;
 
 class Everyauth {
 
-    const VERSION = '0.0.1';
+    const VERSION = '0.0.2';
 
     protected $callback;
     protected $return;
@@ -69,7 +70,57 @@ class Everyauth {
     }
 
     public function twitter() {
-        throw new Exception("Twitter support is not yet ready.");
+        // http://dev.twitter.com/pages/auth
+
+        //https://github.com/abraham/twitteroauth
+        include __DIR__ . '/twitter/twitteroauth/twitteroauth.php';
+
+        if (!isset($_SESSION['everyauth']['twitter'])) {
+            // If no request token, send user to Twitter.
+            $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret']);
+
+            // At a minimum, make sure the host has only printable characters.
+            if (!ctype_print($_SERVER['HTTP_HOST'])) {
+                throw new Exception('Malicious characters in Host header detected.');
+            }
+
+            // Return user to this page.
+            if (empty($_SERVER['HTTPS'])) {
+                $url = "http://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+            } else {
+                $url = "https://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+            }
+
+            $response = $twitter->getRequestToken($url);
+
+            // Keep the request token in the session.
+            $_SESSION['everyauth']['twitter'] = array('request' => $response['oauth_token'],
+                                                      'secret' => $response['oauth_token_secret'];
+    
+            // Redirect the user to Twitter for authorization.
+            $url = $twitter->getAuthorizeURL($response['oauth_token']);
+            header("Location: {$url}");
+            exit;
+        } else {
+            // User is returning from Twitter, so get access token.
+            $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret'], $_SESSION['everyauth']['twitter']['request'], $_SESSION['everyauth']['twitter']['secret']);
+
+            // Get access token.
+            $token = $twitter->getAccessToken($_GET['oauth_verifier']);
+
+            // Get username.
+            $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret'], $token['oauth_token'], $token['oauth_token_secret']);
+            $info = $connection->get('account/verify_credentials');
+
+            $_SESSION['everyauth']['twitter'] = array('token' => $token['oauth_token'],
+                                                      'secret' => $token['oauth_token_secret'],
+                                                      'username' => $info['screen_name']);
+
+            // Send user back into the fray.
+            header("Location: {$this->twitter['return']}");
+            exit;
+        }
+
     }
 
 }
