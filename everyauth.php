@@ -75,7 +75,7 @@ class Everyauth {
         //https://github.com/abraham/twitteroauth
         include __DIR__ . '/twitter/twitteroauth/twitteroauth.php';
 
-        if (!isset($_SESSION['everyauth']['twitter'])) {
+        if (!isset($_GET['oauth_token'])) {
             // If no request token, send user to Twitter.
             $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret']);
 
@@ -95,7 +95,7 @@ class Everyauth {
 
             // Keep the request token in the session.
             $_SESSION['everyauth']['twitter'] = array('request' => $response['oauth_token'],
-                                                      'secret' => $response['oauth_token_secret'];
+                                                      'secret' => $response['oauth_token_secret']);
     
             // Redirect the user to Twitter for authorization.
             $url = $twitter->getAuthorizeURL($response['oauth_token']);
@@ -105,16 +105,12 @@ class Everyauth {
             // User is returning from Twitter, so get access token.
             $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret'], $_SESSION['everyauth']['twitter']['request'], $_SESSION['everyauth']['twitter']['secret']);
 
-            // Get access token.
+            // Get access token and stuff.
             $token = $twitter->getAccessToken($_GET['oauth_verifier']);
-
-            // Get username.
-            $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret'], $token['oauth_token'], $token['oauth_token_secret']);
-            $info = $connection->get('account/verify_credentials');
 
             $_SESSION['everyauth']['twitter'] = array('token' => $token['oauth_token'],
                                                       'secret' => $token['oauth_token_secret'],
-                                                      'username' => $info['screen_name']);
+                                                      'screen_name' => $token['screen_name']);
 
             // Send user back into the fray.
             header("Location: {$this->twitter['return']}");
