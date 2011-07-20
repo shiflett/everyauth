@@ -2,25 +2,38 @@
 
 use \Flickr;
 use \TwitterOAuth;
+use \EpiFoursquare;
 
 class Everyauth {
 
     const VERSION = '0.0.2';
 
-    protected $callback;
     protected $return;
 
     // Configuration for supported apps
     protected $flickr;
+    protected $foursquare;
     protected $twitter;
 
     public function __construct($args) {
-        if (isset($args['callback'])) {
-            $this->callback = $args['callback'];
+        // Make sure the host has only printable characters.
+        if (!ctype_print($_SERVER['HTTP_HOST'])) {
+            throw new Exception('Malicious characters in Host header detected.');
+        }
+
+        // Build return URL.
+        if (empty($_SERVER['HTTPS'])) {
+            $this->return = "http://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+        } else {
+            $this->return = "https://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
         }
 
         if (isset($args['flickr'])) {
             $this->flickr = $args['flickr'];
+        }
+
+        if (isset($args['foursquare'])) {
+            $this->foursquare = $args['foursquare'];
         }
 
         if (isset($args['twitter'])) {
@@ -73,6 +86,32 @@ class Everyauth {
         }
     }
 
+    public function foursquare() {
+        // http://groups.google.com/group/foursquare-api/web/oauth
+
+        // https://github.com/jmathai/foursquare-async
+        include __DIR__ . '/foursquare/EpiFoursquare.php';
+        include __DIR__ . '/foursquare/EpiCurl.php';
+
+        $foursquare = new EpiFoursquare($this->foursquare['key'], $this->foursquare['secret']);
+
+        if (!isset($_GET['code'])) {
+            $url = $foursquare->getAuthorizeUrl($this->return);
+            header("Location: {$url}");
+            exit;
+        } else {
+            // Should $this->return be $this->foursquare['return'] in this case?
+            $token = $foursquare->getAccessToken($_GET['code'], $this->return);
+
+            // TODO: Grab the username, too?
+            $_SESSION['everyauth']['foursquare'] = array('token' => $token->access_token);
+
+            // Send user back into the fray.
+            header("Location: {$this->foursquare['return']}");
+            exit;
+        }
+    }
+
     public function twitter() {
         // http://dev.twitter.com/pages/auth
 
@@ -83,19 +122,7 @@ class Everyauth {
             // If no request token, send user to Twitter.
             $twitter = new TwitterOAuth($this->twitter['key'], $this->twitter['secret']);
 
-            // At a minimum, make sure the host has only printable characters.
-            if (!ctype_print($_SERVER['HTTP_HOST'])) {
-                throw new Exception('Malicious characters in Host header detected.');
-            }
-
-            // Return user to this page.
-            if (empty($_SERVER['HTTPS'])) {
-                $url = "http://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
-            } else {
-                $url = "https://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
-            }
-
-            $response = $twitter->getRequestToken($url);
+            $response = $twitter->getRequestToken($this->return);
 
             // Keep the request token in the session.
             $_SESSION['everyauth']['twitter'] = array('request' => $response['oauth_token'],

@@ -55,4 +55,5 @@ Support
 For now, Everyauth supports the following apps:
 
 - [Flickr](http://flickr.com/)
+- [Foursquare](http://foursquare.com/)
 - [Twitter](http://twitter.com/)
