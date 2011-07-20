@@ -28,9 +28,13 @@ class Everyauth {
         }
     }
 
-    public function controller() {
+    public function controller($app = '') {
         $url = parse_url($_SERVER['REQUEST_URI']);
-        $app = basename($url['path']);
+
+        if (empty($app)) {
+            $app = basename($url['path']);
+        }
+
         if (isset($this->$app)) {
             $this->$app();
         } else {
