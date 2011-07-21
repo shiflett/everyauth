@@ -1,8 +1,9 @@
 <?php
 
-use \Flickr;
-use \TwitterOAuth;
 use \EpiFoursquare;
+use \Flickr;
+use \Instagram;
+use \TwitterOAuth;
 
 class Everyauth {
 
@@ -34,6 +35,10 @@ class Everyauth {
 
         if (isset($args['foursquare'])) {
             $this->foursquare = $args['foursquare'];
+        }
+
+        if (isset($args['instagram'])) {
+            $this->instagram = $args['instagram'];
         }
 
         if (isset($args['twitter'])) {
@@ -79,6 +84,7 @@ class Everyauth {
 
                 // Send user back into the fray.
                 header("Location: {$this->flickr['return']}");
+                session_write_close();
                 exit;
             } else {
                 throw new Exception("flickr.auth.getToken error {$response['code']}: {$response['message']}");
@@ -98,6 +104,7 @@ class Everyauth {
         if (!isset($_GET['code'])) {
             $url = $foursquare->getAuthorizeUrl($this->return);
             header("Location: {$url}");
+            session_write_close();
             exit;
         } else {
             // Should $this->return be $this->foursquare['return'] in this case?
@@ -108,6 +115,32 @@ class Everyauth {
 
             // Send user back into the fray.
             header("Location: {$this->foursquare['return']}");
+            session_write_close();
+            exit;
+        }
+    }
+
+    public function instagram() {
+        // http://instagr.am/developer/auth/
+
+        if (!isset($_GET['code']) && !isset($_GET['error'])) {
+            // https://api.instagram.com/oauth/authorize/?client_id=CLIENT-ID&redirect_uri=REDIRECT-URI&response_type=code
+            exit;
+        } elseif (isset($_GET['error'])) {
+            throw new Exception('User denied access.');
+        } else {
+            /*
+            https://api.instagram.com/oauth/access_token
+            'client_id=CLIENT-ID'
+            'client_secret=CLIENT-SECRET'
+            'grant_type=authorization_code'
+            'redirect_uri=YOUR-REDIRECT-URI'
+            'code=CODE'            
+            */
+
+            // Send user back into the fray.
+            // header("Location: {$this->instagram['return']}");
+            session_write_close();
             exit;
         }
     }
@@ -131,6 +164,7 @@ class Everyauth {
             // Redirect the user to Twitter for authorization.
             $url = $twitter->getAuthorizeURL($response['oauth_token']);
             header("Location: {$url}");
+            session_write_close();
             exit;
         } else {
             // User is returning from Twitter, so get access token.
@@ -145,6 +179,7 @@ class Everyauth {
 
             // Send user back into the fray.
             header("Location: {$this->twitter['return']}");
+            session_write_close();
             exit;
         }
 
